@@ -44,11 +44,11 @@ server.on('request', (req, res) => {
       streamLimit.on('error', (err) => {
         console.error(`streamLimitERR`, err.message);
         writable.end();
+        res.statusCode = 413;
+        res.end('max size');
         fs.unlinkSync(filepath, (err) => {
           if (err) throw err;
         });
-        res.statusCode = 413;
-        res.end('max size');
       });
       // дисконект
       req.on('error', (err) => {
@@ -58,8 +58,7 @@ server.on('request', (req, res) => {
           fs.unlink(filepath, (err2) => {
             if (err2) throw err2;
           });
-          res.statusCode = 600;
-          res.end('no entry files');
+          res.destroy();
           return;
         }
         res.statusCode = 500;

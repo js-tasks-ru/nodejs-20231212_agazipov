@@ -18,10 +18,7 @@ server.on('request', (req, res) => {
         res.statusCode = 400;
         res.end('problem path');
       }
-      files.on('data', (chunk) => {
-        res.statusCode = 200;
-        res.write(chunk);
-      });
+      files.pipe(res);
       files.on('error', (err) => {
         if (err.code === 'ENOENT') {
           res.statusCode = 404;
@@ -33,6 +30,7 @@ server.on('request', (req, res) => {
         }
       });
       files.on('end', () => {
+        res.statusCode = 200;
         res.end();
       });
       break;
