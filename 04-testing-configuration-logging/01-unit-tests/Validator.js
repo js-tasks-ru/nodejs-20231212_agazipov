@@ -12,13 +12,21 @@ module.exports = class Validator {
       const value = obj[field];
       const type = typeof value;
 
-      if (type !== rules.type) {
-        errors.push({field, error: `expect ${rules.type}, got ${type}`});
-        return errors;
+      // проверка на типы перенесена в блок свич,
+      // чтобы при ошибке не блокировать проверку следующих полей объекта
+      function checkType() {
+        if (type !== rules.type) {
+          errors.push({field, error: `expect ${rules.type}, got ${type}`});
+          return true;
+        }
+        return false;
       }
 
       switch (type) {
         case 'string':
+          if (checkType()) {
+            break;
+          }
           if (value.length < rules.min) {
             errors.push({field, error: `too short, expect ${rules.min}, got ${value.length}`});
           }
@@ -27,6 +35,9 @@ module.exports = class Validator {
           }
           break;
         case 'number':
+          if (checkType()) {
+            break;
+          }
           if (value < rules.min) {
             errors.push({field, error: `too little, expect ${rules.min}, got ${value}`});
           }

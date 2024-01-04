@@ -1,6 +1,6 @@
-const url = require('url');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const server = new http.Server();
 
@@ -10,9 +10,29 @@ server.on('request', (req, res) => {
 
   const filepath = path.join(__dirname, 'files', pathname);
 
+  const files = fs.createReadStream(filepath);
+
   switch (req.method) {
     case 'GET':
-
+      if (pathname.includes('/')) {
+        res.statusCode = 400;
+        res.end('problem path');
+      }
+      files.pipe(res);
+      files.on('error', (err) => {
+        if (err.code === 'ENOENT') {
+          res.statusCode = 404;
+          console.log(err.message);
+          res.end('no entry files');
+        } else {
+          res.statusCode = 500;
+          res.end('other error');
+        }
+      });
+      files.on('end', () => {
+        res.statusCode = 200;
+        res.end();
+      });
       break;
 
     default:
