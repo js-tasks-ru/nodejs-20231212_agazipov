@@ -1,21 +1,24 @@
 const path = require('path');
 const Koa = require('koa');
 const app = new Koa();
-const fs = require('node:fs');
 const {EventEmitter} = require('stream');
 
+// кастомное событие для передачи сигнала из одного запроса в другой
+// при успешном POST запросе возникет событие 'my_emit'
+// в промисе GET вешается слушатель и при срабатывании резолвит промис и пишет сообщение в чат
 const myEE = new EventEmitter();
-// myEE.prependListener('foo', () => console.log('b'));
 
 app.use(require('koa-static')(path.join(__dirname, 'public')));
 app.use(require('koa-bodyparser')());
 
 const Router = require('koa-router');
 const router = new Router();
+// симулятор хранилища сообщений
 const messages = [];
-const readMessages = fs.createWriteStream(path.join(__dirname, 'public/history.txt'));
+const validKey = 'message';
 
 app.use(async (ctx, next) => {
+  // мидлвар для обработки ошибок
   try {
     await next();
   } catch (err) {
@@ -30,29 +33,28 @@ app.use(async (ctx, next) => {
 });
 
 router.get('/subscribe', async (ctx, next) => {
-  console.log('server_get');
   await new Promise((resolve) => {
     function callBackEventEmiter() {
+      // функция объявлена здесь чтобы был локальный доступ к аргументу резолв
       resolve(callBackEventEmiter);
     };
+
     myEE.on('my_emit', callBackEventEmiter);
   }).then((callBackEventEmiter) => {
+    // чтобы не перегружать слушателями сервер закрываю их передавая в резолв колбек этого эмитера
     myEE.off('my_emit', callBackEventEmiter);
   });
-  console.log('server_get_2');
   ctx.body = messages[messages.length - 1];
 });
 
 router.post('/publish', async (ctx, next) => {
-  const validKey = 'message';
-  const message = ctx.request.body.message;
+  // обработка ошибки с пустым телом в POST
   if (!(validKey in ctx.request.body)) throw new Error('bad_request');
+  const message = ctx.request.body.message;
   messages.push(message);
-  // ctx.req.pipe(readMessages);
-  readMessages.write(`${message}\n`);
-  // readMessages.end();
   ctx.body = 'its okey';
 
+  // кастомное событие возникает для слушателя в GET
   myEE.emit('my_emit');
 });
 
