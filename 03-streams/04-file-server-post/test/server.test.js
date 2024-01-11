@@ -95,7 +95,7 @@ describe('streams/file-server-post', () => {
           if (!['ECONNRESET', 'EPIPE', 'ECONNABORTED'].includes(err.code)) done(err);
         });
 
-        fse.createReadStream(path.join(fixturesFolder, 'big.png'), { start: 0, end: 1000100}).pipe(request);
+        fse.createReadStream(path.join(fixturesFolder, 'big.png')).pipe(request);
       });
 
       it('успешное создание файла', (done) => {
