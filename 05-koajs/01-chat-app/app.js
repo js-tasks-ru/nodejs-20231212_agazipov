@@ -1,6 +1,7 @@
 const path = require('path');
 const Koa = require('koa');
 const app = new Koa();
+
 const {EventEmitter} = require('stream');
 
 // кастомное событие для передачи сигнала из одного запроса в другой
@@ -8,11 +9,13 @@ const {EventEmitter} = require('stream');
 // в промисе GET вешается слушатель и при срабатывании резолвит промис и пишет сообщение в чат
 const myEE = new EventEmitter();
 
+
 app.use(require('koa-static')(path.join(__dirname, 'public')));
 app.use(require('koa-bodyparser')());
 
 const Router = require('koa-router');
 const router = new Router();
+
 // симулятор хранилища сообщений
 const messages = [];
 const validKey = 'message';
