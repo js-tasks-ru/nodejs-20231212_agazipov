@@ -13,8 +13,8 @@ server.on('request', (req, res) => {
 
   const filepath = path.join(__dirname, 'files', pathname);
   const streamLimit = new LimitSizeStream({
-    limit: 1000000,
-    // limit: 4300000,
+    // limit: 1000000,
+    limit: 4300000,
     readableObjectMode: false,
   });
 
