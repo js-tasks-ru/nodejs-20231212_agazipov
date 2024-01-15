@@ -1,26 +1,33 @@
-const Category = require('../models/Category');
 const Product = require('../models/Product');
-const mapCategory = require('../mappers/category');
+const mapProduct = require('../mappers/product');
+const ObjectId = require('mongoose').Types.ObjectId;
 
 module.exports.productsBySubcategory = async function productsBySubcategory(ctx, next) {
-  // const resultFind = await Category.find();
-  // const result = resultFind.map((categories) => {
-  //   return mapCategory(categories);
-  // });
   const {subcategory} = ctx.query;
 
   if (!subcategory) return next();
   const findProducts = await Product.find({subcategory: subcategory});
+  const productsResult = findProducts.map((product) => {
+    return mapProduct(product);
+  });
 
-  ctx.body = {product: findProducts};
+  ctx.body = {products: productsResult};
 };
 
 module.exports.productList = async function productList(ctx, next) {
-  console.log(ctx.body);
-  ctx.body = {};
+  const findProducts = await Product.find();
+  const productsResult = findProducts.map((product) => {
+    return mapProduct(product);
+  });
+  ctx.body = {products: productsResult};
 };
 
 module.exports.productById = async function productById(ctx, next) {
-  ctx.body = {};
+  const pathId = ctx.path.substr(ctx.path.lastIndexOf('/') + 1);
+  if (!ObjectId.isValid(pathId)) return ctx.status = 400;
+  const findProduct = await Product.findById(pathId);
+  if (!findProduct) return ctx.status = 404;
+  const productResult = mapProduct(findProduct);
+  ctx.body = {product: productResult};
 };
 
