@@ -33,6 +33,8 @@ app.use((ctx, next) => {
   ctx.login = async function(user) {
     const token = uuid();
 
+    await Session.create({token, lastVisit: new Date(), user});
+
     return token;
   };
 
@@ -45,6 +47,15 @@ router.use(async (ctx, next) => {
   const header = ctx.request.get('Authorization');
   if (!header) return next();
 
+  const token = header.split(' ');
+  const user = await Session.findOneAndUpdate({token: token[1]}, {lastVisit: new Date()}).populate('user');
+  if (!user) {
+    ctx.throw('Неверный аутентификационный токен', 401);
+  }
+  ctx.user = {
+    email: user.user.email,
+    displayName: user.user.displayName,
+  };
   return next();
 });
 
@@ -53,7 +64,7 @@ router.post('/login', login);
 router.get('/oauth/:provider', oauth);
 router.post('/oauth_callback', handleMongooseValidationError, oauthCallback);
 
-router.get('/me', me);
+router.get('/me', mustBeAuthenticated, me);
 
 app.use(router.routes());
 
